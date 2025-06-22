@@ -1,0 +1,124 @@
+body {
+            background-image: url(./8333794461b7d319a0959053301e391a.jpg);
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .olho {
+            width: 90mm;
+            position: absolute;
+            display: grid;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            grid-template-columns: 90mm;
+            grid-template-rows: 8mm 15mm 20mm;
+            grid-column: 2;
+        }
+
+        .parteCima {
+            position: relative;
+            left: 15mm;
+            grid-row: 2;
+            grid-column: 1;
+            transition: transform 1s, rotate 1s;
+        }
+        
+        .parteBaixo {
+            position: relative;
+            left: 15mm;
+            grid-row: 3;
+            grid-column: 1;
+            transition: transform 1s, rotate 1s, top 1s;
+        }
+
+        .pupila {
+            position: relative;
+            border: 2px solid rgb(10, 228, 10);
+            border-radius: 100%;
+            left: 38mm;
+            width: 11mm;
+            height: 10mm;
+            top: 12mm;
+            transition: transform 1s, opacity 2s, border 2s;
+            transform: translate(-2px, 0px);
+            grid-row: 2;
+            grid-column: 1;
+        }
+
+        .config {
+            border: 2px solid cyan;
+            border-radius: 100%;
+            position: relative;
+            width: 55mm;
+            left: 16mm;
+            height: 49mm;
+        }
+        
+        .linha01 {
+            transition: d 1s;
+        }
+
+
+        .container {
+            display: grid;
+            grid-template-columns: 100mm 110mm 100mm;
+            height: 100dvh;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .ip_ilustrer {
+            position: relative;
+            grid-column: 1;
+            height: 150mm;
+            display: grid;
+            grid-template-rows: 74mm 74mm;
+            background: transparent;
+            backdrop-filter: blur(10mm);
+            opacity: 0%;
+            border-left: none;
+            color: rgb(11, 242, 11);
+            border-right: none;
+            transition: opacity 0.5s, background 1s;
+        }
+        .line_ip_iluster {
+            position: relative;
+            align-items: end;
+            justify-content: end;
+            grid-row: 1;
+            top: 82%;
+            transition: transform 1.5s;
+        }
+        .line_ip_iluster2 {
+            position: relative;
+            align-items: end;
+            justify-content: end;
+            grid-row: 2;
+            top: -3mm;
+            transition: transform 1.5s;
+        }
+
+        @keyframes blink {
+            0% { border-color: #00ff00; }
+            50% { border-color: transparent; }
+            100% { border-color: #00ff00; }
+        }
+
+        .texto {
+            position: relative;
+            transform: translate(0mm, -5mm);
+            height: 25.5mm;
+            animation: blink 0.7s step-end infinite;
+            border-right: 2px solid #00ff00;
+            white-space: normal; /* Mude isso */
+            word-wrap: break-word;
+            max-width: 100%;
+            max-height: 100%;
+            font-size: 13px;
+            color: green;
+            margin-top: 4mm;
+            margin-bottom: 0mm;
+            margin-left: 2mm;
+            animation: blink 0.7s step-end infinite;
+        }
