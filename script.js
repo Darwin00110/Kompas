@@ -1,9 +1,11 @@
-function config_mapa(){
+function config_mapa(config=1, latitude, longitude){
+    if(config == 1){
             let mapa = document.createElement("div")
             mapa.id = "map"
+            mapa.style.left = "70%"
             document.getElementById("container").appendChild(mapa)
             setTimeout(() => {
-                mapa.style.opacity = "100%"
+            mapa.style.opacity = "100%"
             }, 10);
             const map = L.map('map').setView([0, 0], 13);
         // Usa OpenStreetMap como base
@@ -23,15 +25,33 @@ function config_mapa(){
                             .addTo(map)
                             .bindPopup("Você está aqui!")
                             .openPopup();
-                    },
-                    (error) => {
-                        alert("Erro ao obter localização: " + error.message);
+                        },
+                        (error) => {
+                            alert("Erro ao obter localização: " + error.message);
                     },
                     { enableHighAccuracy: true } // GPS preciso
                 );
             } else {
                 alert("Seu navegador não suporta geolocalização.");
             }
+    } 
+    if(config == 2){
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+                headers: { 'User-Agent': 'SeuApp/1.0' } // Obrigatório!
+            })
+                .then(response => response.json())
+                .then(local => {
+                    const endereco = local.address;
+                    console.log("Cidade:", endereco.city || endereco.town);
+                    console.log("Estado:", endereco.state);
+                    console.log("País:", endereco.country);
+                    
+                    // Atualiza a UI (exemplo)
+                    document.getElementById("cidade").textContent = endereco.city || "N/A";
+                    document.getElementById("pais").textContent = endereco.country || "N/A";
+                })
+                .catch(error => console.error("Erro no Nominatim:", error));
+    }
         }
 
         function digitar(textoElemento, texto, i = 0) {
@@ -81,8 +101,6 @@ function config_mapa(){
             svg01.style.gridColumn = 1
             svg01.style.position = "relative"
             svg01.style.transform = "translate(12mm, -21.5mm)"
-            //temporario
-            svg01.className = "linha01"
             
             let svg02 = document.createElementNS("http://www.w3.org/2000/svg", "svg")
             svg02.setAttribute("width", "150")
@@ -98,7 +116,6 @@ function config_mapa(){
             div.appendChild(svg02)
 
             svg02.style.rotate = "90deg"
-            svg02.className = "linha02"
             svg02.style.transform = "translate(12mm, -21.5mm)"
             
             svg01.style.transition = "transform 1.2s"
@@ -242,6 +259,7 @@ function config_mapa(){
                     ip.style.top = "8%"
                     ip.style.transition = "opacity 0.5s"
                     ip.style.opacity = "0%"
+                    ip.id = "ip"
 
                     let hostname = document.createElement("p")
                     hostname.textContent = `${data['hostname']}`
@@ -253,7 +271,7 @@ function config_mapa(){
                     hostname.style.whiteSpace = "nowrap"
                     hostname.style.transition = "opacity 0.5s"
                     hostname.style.opacity = "0%"
-
+                    hostname.id = "hostname"
 
                     let city = document.createElement("p")
                     city.textContent = `${data['city']}`
@@ -264,7 +282,7 @@ function config_mapa(){
                     city.style.whiteSpace = "nowrap"
                     city.style.transition = "opacity 0.5s"
                     city.style.opacity = "0%"
-
+                    city.id = "city"
 
                     let region = document.createElement("p")
                     region.textContent = `${data['region']}`
@@ -275,7 +293,7 @@ function config_mapa(){
                     region.style.whiteSpace = "nowrap"
                     region.style.transition = "opacity 0.5s"
                     region.style.opacity = "0%"
-
+                    region.id = "region"
 
                     let country = document.createElement("p")
                     country.textContent = `${data['country']}`
@@ -286,7 +304,7 @@ function config_mapa(){
                     country.style.whiteSpace = "nowrap"
                     country.style.transition = "opacity 0.5s"
                     country.style.opacity = "0%"
-
+                    country.id = "country"
 
                     let loc = document.createElement("p")
                     loc.textContent = `${data['loc']}`
@@ -297,7 +315,7 @@ function config_mapa(){
                     loc.style.position = "relative"
                     loc.style.transition = "opacity 0.5s"
                     loc.style.opacity = "0%"
-
+                    loc.id = "loc"
 
                     let org = document.createElement("p")
                     org.style.position = "relative"
@@ -308,7 +326,7 @@ function config_mapa(){
                     org.style.whiteSpace = "nowrap"
                     org.style.transition = "opacity 0.5s"
                     org.style.opacity = "0%"
-
+                    org.id = "org"
 
                     let postal = document.createElement("p")
                     postal.style.position = "relative"
@@ -318,6 +336,7 @@ function config_mapa(){
                     postal.textContent = `${data['postal']}`
                     postal.style.transition = "opacity 0.5s"
                     postal.style.opacity = "0%"
+                    postal.id = "postal"
 
                     let fuso_horario = document.createElement("p")
                     fuso_horario.style.position = "relative"
@@ -328,7 +347,7 @@ function config_mapa(){
                     fuso_horario.style.whiteSpace = "nowrap"
                     fuso_horario.style.transition = "opacity 0.5s"
                     fuso_horario.style.opacity = "0%"
-
+                    fuso_horario.id = "fuso_horario"
 
                     ip_iluster.append(ip)
                     ip_iluster.append(hostname)
@@ -499,6 +518,72 @@ function config_mapa(){
 
         }
 
-        addEventListener("DOMContentLoaded", () => {
-            apresentacao()
+        function procurarUsuario(){
+            config_mapa()
+            config_ip_iluster()
+            let div = document.createElement("div")
+            div.style.display = "grid"
+            div.style.width = "125mm"
+            div.style.marginTop = "60mm"
+            div.style.height = "10mm"
+            div.style.gridTemplateRows = "50% 50%"
+
+            let bottao = document.createElement("button")
+            bottao.textContent = "Enviar"
+            bottao.style.width = "20mm"
+            bottao.style.border = "2px solid green"
+            bottao.style.borderRadius = "6px"
+            bottao.style.height = "30px"
+            bottao.style.backgroundColor = "rgba(0, 0, 0, 0.5)"
+            bottao.style.color = "rgb(11, 242, 11)"
+            bottao.style.gridRow = 1
+            bottao.style.marginRight = "18px"
+
+            let input = document.createElement("input")
+            input.style.position = "relative"
+            input.style.width = "80mm"
+            input.style.gridRow = 1
+            input.style.marginLeft = "14mm"
+            input.style.height = "23px"
+            input.style.borderRadius = "6px"
+            input.style.color = "rgb(11, 242, 11)"
+            input.style.border = "2px solid rgb(11, 242, 11)"
+            input.style.backgroundColor = "rgba(0, 0, 0, 0.5)"
+            div.append(input)
+            div.append(bottao)
+            document.getElementById("container").appendChild(div)
+            bottao.addEventListener("click", () => {
+                const ip = input.value
+                fetch(`https://ipinfo.io/${ip}?token=c8e52fd819216e`)
+                .then(response => response.json())
+                .then(data => {
+                    let ip = document.getElementById("ip")
+                    let hostname = document.getElementById("hostname")
+                    let city = document.getElementById("city")
+                    let region = document.getElementById("region")
+                    let country = document.getElementById("country")
+                    let loc = document.getElementById("loc")
+                    let org = document.getElementById("org")
+                    let postal = document.getElementById("postal")
+                    let fuso_horario = document.getElementById("fuso_horario")
+
+                    ip.textContent = `${data.ip}`
+                    hostname.textContent = `${data.hostname}`
+                    city.textContent = `${data.city}`
+                    region.textContent = `${data.region}`
+                    country.textContent = `${data.country}`
+                    loc.textContent = `${data.loc}`
+                    org.textContent = `${data.org}`
+                    postal.textContent = `${data.postal}`
+                    fuso_horario.textContent = `${data.fuso_horario}`
+
+                    const [lat, lon] = data.loc.split(',');
+                    config_mapa(config=2, lat, lon)
+                })
+                .catch(error => console.error())
+
+            })
+        }
+    addEventListener("DOMContentLoaded", () => {
+            procurarUsuario()
         })
