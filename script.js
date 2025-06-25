@@ -370,6 +370,7 @@ function config_mapa(config=1, latitude, longitude){
                         postal.style.opacity = "100%"
                         fuso_horario.style.opacity = "100%"
                         config_mapa()
+                        procurarUsuario()
                     }, 1000);
                 })
                 .catch(error => {
@@ -519,8 +520,6 @@ function config_mapa(config=1, latitude, longitude){
         }
 
         function procurarUsuario(){
-            config_mapa()
-            config_ip_iluster()
             let div = document.createElement("div")
             div.style.display = "grid"
             div.style.width = "125mm"
@@ -585,5 +584,5 @@ function config_mapa(config=1, latitude, longitude){
             })
         }
     addEventListener("DOMContentLoaded", () => {
-            procurarUsuario()
+            apresentacao()
         })
