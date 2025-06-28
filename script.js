@@ -1,3 +1,5 @@
+
+
 function config_mapa(config=1, latitude, longitude){
     if(config == 1){
             let mapa = document.createElement("div")
@@ -36,21 +38,37 @@ function config_mapa(config=1, latitude, longitude){
             }
     } 
     if(config == 2){
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
-                headers: { 'User-Agent': 'SeuApp/1.0' } // Obrigatório!
-            })
-                .then(response => response.json())
-                .then(local => {
-                    const endereco = local.address;
-                    console.log("Cidade:", endereco.city || endereco.town);
-                    console.log("Estado:", endereco.state);
-                    console.log("País:", endereco.country);
-                    
-                    // Atualiza a UI (exemplo)
-                    document.getElementById("cidade").textContent = endereco.city || "N/A";
-                    document.getElementById("pais").textContent = endereco.country || "N/A";
-                })
-                .catch(error => console.error("Erro no Nominatim:", error));
+            const map = L.map('map').setView([0, 0], 13);
+        // Usa OpenStreetMap como base
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            // Tenta pegar a localização do usuário em tempo real
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    map.setView([latitude, longitude], 15);
+
+                    L.marker([latitude, longitude])
+                        .addTo(map)
+                        .bindPopup("Você está aqui!")
+                        .openPopup();
+                },
+                (error) => {
+                    alert("Erro ao obter localização: " + error.message);
+                },
+                { enableHighAccuracy: true }
+            );
+            } else {
+                alert("Seu navegador não suporta geolocalização.");
+            } 
+        // Adiciona novo marcador
+        L.marker([latitude, longitude])
+            .addTo(map)
+            .bindPopup("Localização do IP")
+            .openPopup();
     }
         }
 
@@ -520,51 +538,59 @@ function config_mapa(config=1, latitude, longitude){
         }
 
         function procurarUsuario(){
+            // Cria a interface de busca
             let div = document.createElement("div")
             div.style.display = "grid"
             div.style.width = "125mm"
             div.style.marginTop = "60mm"
-            div.style.height = "10mm"
-            div.style.gridTemplateRows = "50% 50%"
+            div.style.gap = "10px"
+            div.style.alignItems = "center"
 
-            let bottao = document.createElement("button")
-            bottao.textContent = "Enviar"
-            bottao.style.width = "20mm"
-            bottao.style.border = "2px solid green"
-            bottao.style.borderRadius = "6px"
-            bottao.style.height = "30px"
-            bottao.style.backgroundColor = "rgba(0, 0, 0, 0.5)"
-            bottao.style.color = "rgb(11, 242, 11)"
-            bottao.style.gridRow = 1
-            bottao.style.marginRight = "18px"
-
+            // Cria o campo de input
             let input = document.createElement("input")
-            input.style.position = "relative"
+            input.type = "text"
+            input.placeholder = "Digite o IP"
             input.style.width = "80mm"
-            input.style.gridRow = 1
-            input.style.marginLeft = "14mm"
-            input.style.height = "23px"
+            input.style.padding = "8px"
             input.style.borderRadius = "6px"
             input.style.color = "rgb(11, 242, 11)"
             input.style.border = "2px solid rgb(11, 242, 11)"
             input.style.backgroundColor = "rgba(0, 0, 0, 0.5)"
-            div.append(input)
-            div.append(bottao)
+
+            // Cria o botão
+            let bottao = document.createElement("button")
+            bottao.textContent = "Localizar"
+            bottao.style.padding = "8px 16px"
+            bottao.style.border = "2px solid green"
+            bottao.style.borderRadius = "6px"
+            bottao.style.backgroundColor = "rgba(0, 0, 0, 0.5)"
+            bottao.style.color = "rgb(11, 242, 11)"
+            bottao.style.cursor = "pointer"
+
+            // Adiciona os elementos ao DOM
+            div.appendChild(input)
+            div.appendChild(bottao)
             document.getElementById("container").appendChild(div)
-            bottao.addEventListener("click", () => {
-                const ip = input.value
-                fetch(`https://ipinfo.io/${ip}?token=c8e52fd819216e`)
-                .then(response => response.json())
-                .then(data => {
-                    let ip = document.getElementById("ip")
-                    let hostname = document.getElementById("hostname")
-                    let city = document.getElementById("city")
-                    let region = document.getElementById("region")
-                    let country = document.getElementById("country")
-                    let loc = document.getElementById("loc")
-                    let org = document.getElementById("org")
-                    let postal = document.getElementById("postal")
-                    let fuso_horario = document.getElementById("fuso_horario")
+
+            // Adiciona o listener ao botão
+            bottao.addEventListener("click", async () => {
+                const ip = input.value.trim();
+                try {
+                    const response = await fetch(`https://ipinfo.io/${ip}?token=c8e52fd819216e`);
+                    if (!response.ok) {
+                        throw new Error(`Erro na API: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    // Declara e obtém os elementos existentes
+                    const ip = document.getElementById("ip")
+                    const hostname = document.getElementById("hostname")
+                    const city = document.getElementById("city")
+                    const region = document.getElementById("region")
+                    const country = document.getElementById("country")
+                    const loc = document.getElementById("loc")
+                    const org = document.getElementById("org")
+                    const postal = document.getElementById("postal")
+                    const fuso_horario = document.getElementById("fuso_horario")
 
                     ip.textContent = `${data.ip}`
                     hostname.textContent = `${data.hostname}`
@@ -576,13 +602,15 @@ function config_mapa(config=1, latitude, longitude){
                     postal.textContent = `${data.postal}`
                     fuso_horario.textContent = `${data.fuso_horario}`
 
+                    // Atualiza o mapa com as coordenadas do IP
                     const [lat, lon] = data.loc.split(',');
-                    config_mapa(config=2, lat, lon)
-                })
-                .catch(error => console.error())
-
-            })
-        }
-    addEventListener("DOMContentLoaded", () => {
-            apresentacao()
+                    config_mapa(2, parseFloat(lat), parseFloat(lon))
+                } catch (error) {
+                    console.error(error)
+                }
         })
+    }
+        
+    document.addEventListener("DOMContentLoaded", () => {
+            apresentacao();
+        });
