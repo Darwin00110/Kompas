@@ -633,5 +633,5 @@ function config_mapa(){
 
         
     document.addEventListener("DOMContentLoaded", () => {
-            config_ip_iluster()
+            apresentacao()
         });
