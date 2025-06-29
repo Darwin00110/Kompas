@@ -1,77 +1,60 @@
 
-
-function config_mapa(config=1, latitude, longitude){
-    if(config == 1){
-            let mapa = document.createElement("div")
-            mapa.id = "map"
-            mapa.style.left = "70%"
-            document.getElementById("container").appendChild(mapa)
-            setTimeout(() => {
+let map = null
+let markerUsuario = null
+let markerIP = null
+let funcionandoMapaUsuario = true
+let watchId = null 
+function config_mapa(){
+    if(funcionandoMapaUsuario){
+        mapa = document.createElement("div")
+        mapa.id = "map"
+        mapa.style.left = "70%"
+        mapa.style.top = "27mm"
+        mapa.style.width = "100mm"
+        mapa.style.height = "145mm"
+        document.getElementById("container").appendChild(mapa)
+        
+        setTimeout(() => {
             mapa.style.opacity = "100%"
-            }, 10);
-            const map = L.map('map').setView([0, 0], 13);
-        // Usa OpenStreetMap como base
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
+        }, 10);
+    
+    // Cria o mapa uma única vez
+        map = L.map('map').setView([0, 0], 13);
+    
+    // Usa OpenStreetMap como base
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
 
-            // Tenta pegar a localização do usuário em tempo real
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        map.setView([latitude, longitude], 15); // Zoom 15 (rua)
-
-                        // Adiciona um marcador
-                        L.marker([latitude, longitude])
-                            .addTo(map)
-                            .bindPopup("Você está aqui!")
-                            .openPopup();
-                        },
-                        (error) => {
-                            alert("Erro ao obter localização: " + error.message);
-                    },
-                    { enableHighAccuracy: true } // GPS preciso
-                );
-            } else {
-                alert("Seu navegador não suporta geolocalização.");
-            }
-    } 
-    if(config == 2){
-            const map = L.map('map').setView([0, 0], 13);
-        // Usa OpenStreetMap como base
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
-
-            // Tenta pegar a localização do usuário em tempo real
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    map.setView([latitude, longitude], 15);
-
-                    L.marker([latitude, longitude])
-                        .addTo(map)
-                        .bindPopup("Você está aqui!")
-                        .openPopup();
-                },
-                (error) => {
-                    alert("Erro ao obter localização: " + error.message);
-                },
-                { enableHighAccuracy: true }
-            );
-            } else {
-                alert("Seu navegador não suporta geolocalização.");
-            } 
-        // Adiciona novo marcador
-        L.marker([latitude, longitude])
-            .addTo(map)
-            .bindPopup("Localização do IP")
-            .openPopup();
+    // Tenta pegar a localização do usuário em tempo real
+    if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                
+                // Remove o marcador anterior se existir
+                if (markerUsuario) {
+                    map.removeLayer(markerUsuario);
+                }
+                
+                // Atualiza a visão do mapa
+                map.setView([latitude, longitude], 15);
+                
+                // Cria novo marcador
+                markerUsuario = L.marker([latitude, longitude])
+                .addTo(map)
+                .bindPopup("Você está aqui!")
+                .openPopup();
+            },
+            (error) => {
+                alert("Erro ao obter localização: " + error.message);
+            },
+            { enableHighAccuracy: true }
+        );
     }
-        }
-
+    }
+} 
+        
         function digitar(textoElemento, texto, i = 0) {
             return new Promise(resolve => {
             function escrever() {
@@ -539,6 +522,26 @@ function config_mapa(config=1, latitude, longitude){
 
         function procurarUsuario(){
             // Cria a interface de busca
+            function configMapa(latitude, longitude){
+                // Remove o marcador do IP anterior se existir
+                if (markerIP) {
+                    map.removeLayer(markerIP);
+                }
+
+                if (markerUsuario){
+                    map.removeLayer(markerUsuario);
+                    markerUsuario = null;
+                }
+                
+                // Atualiza a visão do mapa
+                map.setView([latitude, longitude], 15);
+                
+                // Cria novo marcador
+                markerIP = L.marker([latitude, longitude])
+                    .addTo(map)
+                    .bindPopup("Localização do Ip!")
+                    .openPopup();
+            }
             let div = document.createElement("div")
             div.style.display = "grid"
             div.style.width = "125mm"
@@ -573,44 +576,62 @@ function config_mapa(config=1, latitude, longitude){
             document.getElementById("container").appendChild(div)
 
             // Adiciona o listener ao botão
-            bottao.addEventListener("click", async () => {
-                const ip = input.value.trim();
+            bottao.addEventListener("click", () => {
+                funcionandoMapaUsuario = false;
+                
+                // Para o watchPosition e remove marcadores
+                if(watchId) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
+                
+                // Remove marcadores existentes
+                if (markerUsuario) {
+                    map.removeLayer(markerUsuario);
+                    markerUsuario = null;
+                }
+                
+                ip = input.value.trim();
                 try {
-                    const response = await fetch(`https://ipinfo.io/${ip}?token=c8e52fd819216e`);
-                    if (!response.ok) {
-                        throw new Error(`Erro na API: ${response.status}`);
-                    }
-                    const data = await response.json();
+                    
+                    fetch(`https://ipinfo.io/${ip}?token=c8e52fd819216e`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const ip_iluster = document.getElementById("ip")
+                        const hostname = document.getElementById("hostname")
+                        const city = document.getElementById("city")
+                        const region = document.getElementById("region")
+                        const country = document.getElementById("country")
+                        const loc = document.getElementById("loc")
+                        const org = document.getElementById("org")
+                        const postal = document.getElementById("postal")
+                        const fuso_horario = document.getElementById("fuso_horario")
+
+                        ip_iluster.textContent = `${data.ip}`
+                        hostname.textContent = `${data.hostname}`
+                        city.textContent = `${data.city}`
+                        region.textContent = `${data.region}`
+                        country.textContent = `${data.country}`
+                        loc.textContent = `${data.loc}`
+                        org.textContent = `${data.org}`
+                        postal.textContent = `${data.postal}`
+                        fuso_horario.textContent = `${data.fuso_horario}`
+
+                        // Atualiza o mapa com as coordenadas do IP
+                        const [lat, lon] = data.loc.split(',');
+                        configMapa(parseFloat(lat), parseFloat(lon));
+                    })
+                    .catch(err => console.error("Erro na API: ", err))
+
                     // Declara e obtém os elementos existentes
-                    const ip = document.getElementById("ip")
-                    const hostname = document.getElementById("hostname")
-                    const city = document.getElementById("city")
-                    const region = document.getElementById("region")
-                    const country = document.getElementById("country")
-                    const loc = document.getElementById("loc")
-                    const org = document.getElementById("org")
-                    const postal = document.getElementById("postal")
-                    const fuso_horario = document.getElementById("fuso_horario")
-
-                    ip.textContent = `${data.ip}`
-                    hostname.textContent = `${data.hostname}`
-                    city.textContent = `${data.city}`
-                    region.textContent = `${data.region}`
-                    country.textContent = `${data.country}`
-                    loc.textContent = `${data.loc}`
-                    org.textContent = `${data.org}`
-                    postal.textContent = `${data.postal}`
-                    fuso_horario.textContent = `${data.fuso_horario}`
-
-                    // Atualiza o mapa com as coordenadas do IP
-                    const [lat, lon] = data.loc.split(',');
-                    config_mapa(2, parseFloat(lat), parseFloat(lon))
+                    
                 } catch (error) {
                     console.error(error)
                 }
         })
     }
+
         
     document.addEventListener("DOMContentLoaded", () => {
-            apresentacao();
+            config_ip_iluster()
         });
