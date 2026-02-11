@@ -1,31 +1,61 @@
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { MapPin, Globe, Signal, Wifi, Building2, MapPinned, Clock } from 'lucide-react';
+import { MapPin, Signal, Wifi, Clock, Search, Loader2, Navigation } from 'lucide-react';
 import { HolographicGlobe } from './HolographicGlobe';
 import { GeolocationData, GeolocationStatus } from '../types/geolocation';
 import { fetchGeolocation } from '../services/geolocationService';
+import { isValidIP, getIPErrorMessage } from '../utils/ipValidator';
 
 export function GeoPanel() {
   const [locationData, setLocationData] = useState<GeolocationData | null>(null);
   const [status, setStatus] = useState<GeolocationStatus>('loading');
   const [error, setError] = useState<string | null>(null);
+  const [ipInput, setIpInput] = useState('');
+  const [ipError, setIpError] = useState<string | null>(null);
 
+  // Carrega dados iniciais
   useEffect(() => {
-    const loadGeolocationData = async () => {
-      try {
-        setStatus('loading');
-        const data = await fetchGeolocation();
-        setLocationData(data);
-        setStatus('success');
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        setError(errorMessage);
-        setStatus('error');
-      }
-    };
-
     loadGeolocationData();
   }, []);
+
+  const loadGeolocationData = async (ip?: string) => {
+    try {
+      setStatus('loading');
+      setError(null);
+      const data = await fetchGeolocation(ip);
+      setLocationData(data);
+      setStatus('success');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      setStatus('error');
+    }
+  };
+
+  const handleSearch = () => {
+    const trimmedIp = ipInput.trim();
+    
+    // Valida o IP
+    if (!isValidIP(trimmedIp)) {
+      setIpError(getIPErrorMessage(trimmedIp));
+      return;
+    }
+    
+    // Limpa erro e faz a busca
+    setIpError(null);
+    loadGeolocationData(trimmedIp);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIpInput(e.target.value);
+    if (ipError) setIpError(null); // Limpa erro ao digitar
+  };
 
   return (
     <motion.div
@@ -53,6 +83,73 @@ export function GeoPanel() {
              status === 'loading' ? 'INITIALIZING SYSTEMS...' : 
              'SYSTEM ERROR'}
           </p>
+        </motion.div>
+
+        {/* Barra de Pesquisa de IP */}
+        <motion.div
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mb-6 max-w-2xl mx-auto"
+        >
+          <div className="bg-gradient-to-br from-green-950/50 to-black border-2 border-green-500/30 rounded-lg p-4"
+            style={{ boxShadow: '0 0 20px rgba(34, 197, 94, 0.1)' }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Search className="text-green-400 w-5 h-5" />
+              <h3 className="text-sm font-bold text-green-400 tracking-wider">IP LOOKUP</h3>
+            </div>
+            
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={ipInput}
+                  onChange={handleInputChange}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Digite um endereço IP (ex: 8.8.8.8)"
+                  className="w-full bg-black/50 border-2 border-green-500/30 rounded px-4 py-2 text-green-300 placeholder-green-700 font-mono text-sm focus:outline-none focus:border-green-500 transition-colors"
+                  style={{ boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.5)' }}
+                />
+                {ipError && (
+                  <p className="text-red-400 text-xs mt-2 font-mono">{ipError}</p>
+                )}
+              </div>
+              <button
+                onClick={handleSearch}
+                disabled={status === 'loading'}
+                className="bg-green-600 hover:bg-green-500 disabled:bg-green-900 disabled:cursor-not-allowed text-black font-bold px-6 py-2 rounded transition-colors font-mono"
+                style={{ 
+                  boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)',
+                  textShadow: '0 0 5px rgba(0, 0, 0, 0.5)'
+                }}
+              >
+                {status === 'loading' ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  'SEARCH'
+                )}
+              </button>
+            </div>
+
+            {/* IPs de exemplo */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="text-xs text-green-500">Exemplos:</span>
+              {['24.48.0.1', '8.8.8.8', '1.1.1.1', '200.160.2.3'].map((ip) => (
+                <button
+                  key={ip}
+                  onClick={() => {
+                    setIpInput(ip);
+                    setIpError(null);
+                    loadGeolocationData(ip);
+                  }}
+                  className="text-xs text-green-400 hover:text-green-300 underline font-mono transition-colors"
+                >
+                  {ip}
+                </button>
+              ))}
+            </div>
+          </div>
         </motion.div>
 
         {/* Painel Principal */}
@@ -177,7 +274,7 @@ export function GeoPanel() {
                   style={{ boxShadow: '0 0 20px rgba(34, 197, 94, 0.1)' }}
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <MapPinned className="text-green-400 w-6 h-6" />
+                    <MapPin className="text-green-400 w-6 h-6" />
                     <h2 className="text-xl font-bold text-green-400">COORDINATES</h2>
                   </div>
                   

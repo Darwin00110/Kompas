@@ -16,23 +16,82 @@ const API_ENDPOINT = '/api/geolocation';
  * Dados de demonstração baseados no exemplo fornecido
  * Em produção, isso virá do seu backend
  */
-function getMockGeolocationData(): GeolocationData {
-  return {
-    status: "success",
-    country: "Canada",
-    countryCode: "CA",
-    region: "QC",
-    regionName: "Quebec",
-    city: "Montreal",
-    zip: "H1K",
-    lat: 45.6085,
-    lon: -73.5493,
-    timezone: "America/Toronto",
-    isp: "Le Groupe Videotron Ltee",
-    org: "Videotron Ltee",
-    as: "AS5769 Videotron Ltee",
-    query: "24.48.0.1"
+function getMockGeolocationData(ip?: string): GeolocationData {
+  // Diferentes dados mock baseados no IP para demonstração
+  const mockData: Record<string, GeolocationData> = {
+    '24.48.0.1': {
+      status: "success",
+      country: "Canada",
+      countryCode: "CA",
+      region: "QC",
+      regionName: "Quebec",
+      city: "Montreal",
+      zip: "H1K",
+      lat: 45.6085,
+      lon: -73.5493,
+      timezone: "America/Toronto",
+      isp: "Le Groupe Videotron Ltee",
+      org: "Videotron Ltee",
+      as: "AS5769 Videotron Ltee",
+      query: "24.48.0.1"
+    },
+    '8.8.8.8': {
+      status: "success",
+      country: "United States",
+      countryCode: "US",
+      region: "CA",
+      regionName: "California",
+      city: "Mountain View",
+      zip: "94035",
+      lat: 37.386,
+      lon: -122.0838,
+      timezone: "America/Los_Angeles",
+      isp: "Google LLC",
+      org: "Google Public DNS",
+      as: "AS15169 Google LLC",
+      query: "8.8.8.8"
+    },
+    '1.1.1.1': {
+      status: "success",
+      country: "Australia",
+      countryCode: "AU",
+      region: "QLD",
+      regionName: "Queensland",
+      city: "Brisbane",
+      zip: "4000",
+      lat: -27.4679,
+      lon: 153.0281,
+      timezone: "Australia/Brisbane",
+      isp: "Cloudflare, Inc.",
+      org: "APNIC Research and Development",
+      as: "AS13335 Cloudflare, Inc.",
+      query: "1.1.1.1"
+    },
+    '200.160.2.3': {
+      status: "success",
+      country: "Brazil",
+      countryCode: "BR",
+      region: "SP",
+      regionName: "São Paulo",
+      city: "São Paulo",
+      zip: "01000",
+      lat: -23.5505,
+      lon: -46.6333,
+      timezone: "America/Sao_Paulo",
+      isp: "Telefonica Brasil S.A",
+      org: "Telefonica Brasil S.A",
+      as: "AS18881 Telefonica Brasil S.A",
+      query: "200.160.2.3"
+    }
   };
+  
+  // Se o IP estiver no mock data, retorna
+  if (ip && mockData[ip]) {
+    return mockData[ip];
+  }
+  
+  // Caso contrário, retorna dados padrão (Montreal)
+  return mockData['24.48.0.1'];
 }
 
 /**
@@ -69,7 +128,7 @@ export async function fetchGeolocation(ip?: string): Promise<GeolocationData> {
     await new Promise(resolve => setTimeout(resolve, 800));
     
     // TEMPORÁRIO: Retorna dados mock
-    const data = getMockGeolocationData();
+    const data = getMockGeolocationData(ip);
     
     // TODO: Quando o backend estiver pronto, descomente o código abaixo e remova getMockGeolocationData()
     /*
