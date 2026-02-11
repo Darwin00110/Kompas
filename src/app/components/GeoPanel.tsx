@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { MapPin, Signal, Wifi, Clock, Search, Loader2, Navigation } from 'lucide-react';
 import { HolographicGlobe } from './HolographicGlobe';
+import { InteractiveMap } from './InteractiveMap';
 import { GeolocationData, GeolocationStatus } from '../types/geolocation';
 import { fetchGeolocation } from '../services/geolocationService';
 import { isValidIP, getIPErrorMessage } from '../utils/ipValidator';
@@ -12,6 +13,7 @@ export function GeoPanel() {
   const [error, setError] = useState<string | null>(null);
   const [ipInput, setIpInput] = useState('');
   const [ipError, setIpError] = useState<string | null>(null);
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
   // Carrega dados iniciais
   useEffect(() => {
@@ -197,6 +199,26 @@ export function GeoPanel() {
                 longitude={locationData.lon}
               />
             )}
+            
+            {/* Botão para abrir mapa - sobreposto ao globo */}
+            {locationData && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ delay: 0.7 }}
+                onClick={() => setIsMapOpen(true)}
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 bg-green-600/20 hover:bg-green-600/40 backdrop-blur-sm border-2 border-green-500/50 rounded-full p-6 group cursor-pointer"
+                style={{ boxShadow: '0 0 30px rgba(34, 197, 94, 0.4)' }}
+              >
+                <div className="text-center">
+                  <Navigation className="w-8 h-8 text-green-400 mx-auto mb-2 group-hover:rotate-12 transition-transform" />
+                  <p className="text-green-400 font-bold text-sm tracking-wider">ABRIR MAPA</p>
+                  <p className="text-green-500 font-mono text-xs mt-1">Clique para visualizar</p>
+                </div>
+              </motion.button>
+            )}
           </motion.div>
 
           {/* Painel de Dados */}
@@ -371,6 +393,17 @@ export function GeoPanel() {
           </motion.div>
         </div>
       </div>
+
+      {/* Componente de Mapa Interativo */}
+      {locationData && (
+        <InteractiveMap
+          isOpen={isMapOpen}
+          onClose={() => setIsMapOpen(false)}
+          latitude={locationData.lat}
+          longitude={locationData.lon}
+          locationName={`${locationData.city}, ${locationData.country}`}
+        />
+      )}
     </motion.div>
   );
 }
