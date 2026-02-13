@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Loader2, Navigation2, Layers, RefreshCw } from 'lucide-react';
 import { MapData, Coordinates } from '../types/mapData';
 import { fetchMapData } from '../services/mapService';
+import { DataUser, type Data } from './GeoPanel'
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -63,6 +64,8 @@ export function InteractiveMap({
     try {
       setLoading(true);
       setError(null);
+      coordinates.lat = DataUser.lat
+      coordinates.lng = DataUser.lon;
       const data = await fetchMapData(coordinates);
       setMapData(data);
     } catch (err) {
@@ -264,14 +267,7 @@ export function InteractiveMap({
             </div>
 
             {/* Info: Preparado para API */}
-            <div className="absolute bottom-4 right-4 z-10 bg-black/80 border border-green-500/30 rounded p-3 backdrop-blur-sm max-w-xs">
-              <p className="text-green-400 font-mono text-xs">
-                <span className="font-bold">API STATUS:</span> Modo Demo
-              </p>
-              <p className="text-green-500 font-mono text-xs mt-1">
-                Conecte ao backend para dados em tempo real
-              </p>
-            </div>
+            
           </motion.div>
         </motion.div>
       )}

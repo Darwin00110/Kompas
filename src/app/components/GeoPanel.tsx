@@ -6,6 +6,41 @@ import { InteractiveMap } from './InteractiveMap';
 import { GeolocationData, GeolocationStatus } from '../types/geolocation';
 import { fetchGeolocation } from '../services/geolocationService';
 import { isValidIP, getIPErrorMessage } from '../utils/ipValidator';
+import axios from 'axios'
+
+export interface Data {
+  as: string,
+  city: string,
+  country: string,
+  countryCode: string,
+  isp: string,
+  lat: number,
+  lon: number,
+  org: string,
+  query: string,
+  region: string,
+  regionName: string,
+  status: string,
+  timezone: string,
+  zip: string
+}
+
+export const DataUser: Data = {
+  as: "",
+  city: "",
+  country: "",
+  countryCode: "",
+  isp: "",
+  lat: 0,
+  lon: 0,
+  org: "",
+  query: "",
+  region: "",
+  regionName: "",
+  status: "",
+  timezone: "",
+  zip: ""
+}
 
 export function GeoPanel() {
   const [locationData, setLocationData] = useState<GeolocationData | null>(null);
@@ -15,7 +50,6 @@ export function GeoPanel() {
   const [ipError, setIpError] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
 
-  // Carrega dados iniciais
   useEffect(() => {
     loadGeolocationData();
   }, []);
@@ -23,6 +57,13 @@ export function GeoPanel() {
   const loadGeolocationData = async (ip?: string) => {
     try {
       setStatus('loading');
+      const IPUser = await axios.get("https://api.iplocate.io/json")
+      const response = await axios.get(`http://ip-api.com/json/${IPUser.data.ip}`)
+      console.log(response.data)
+      setTimeout(() => {
+        setLocationData(response.data);
+      }, 2000);
+      setStatus('success');
       setError(null);
       const data = await fetchGeolocation(ip);
       setLocationData(data);
@@ -34,18 +75,32 @@ export function GeoPanel() {
     }
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     const trimmedIp = ipInput.trim();
-    
-    // Valida o IP
+    const response = await axios.get(`http://ip-api.com/json/${trimmedIp}`)
+    DataUser.as = response.data.as
+    DataUser.city = response.data.city
+    DataUser.country = response.data.country
+    DataUser.countryCode = response.data.countryCode
+    DataUser.isp = response.data.isp
+    DataUser.lat = response.data.lat
+    DataUser.lon = response.data.lon
+    DataUser.org = response.data.org
+    DataUser.query = response.data.query
+    DataUser.region = response.data.region
+    DataUser.regionName = response.data.regionName
+    DataUser.status = response.data.status
+    DataUser.timezone = response.data.timezone
+    DataUser.zip = response.data.zip
+    // Verifica se o IP é válido
     if (!isValidIP(trimmedIp)) {
       setIpError(getIPErrorMessage(trimmedIp));
       return;
     }
-    
+
     // Limpa erro e faz a busca
     setIpError(null);
-    loadGeolocationData(trimmedIp);
+    setLocationData(response.data);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -74,16 +129,16 @@ export function GeoPanel() {
           transition={{ delay: 0.3 }}
           className="text-center mb-8"
         >
-          <h1 className="text-5xl font-bold text-green-400 mb-2" style={{ 
+          <h1 className="text-5xl font-bold text-green-400 mb-2" style={{
             textShadow: '0 0 20px rgba(34, 197, 94, 0.5)',
             letterSpacing: '0.15em'
           }}>
             KOMPAS
           </h1>
           <p className="text-green-500 font-mono text-sm tracking-widest">
-            {status === 'success' ? 'GEOLOCATION SYSTEM ONLINE' : 
-             status === 'loading' ? 'INITIALIZING SYSTEMS...' : 
-             'SYSTEM ERROR'}
+            {status === 'success' ? 'GEOLOCATION SYSTEM ONLINE' :
+              status === 'loading' ? 'INITIALIZING SYSTEMS...' :
+                'SYSTEM ERROR'}
           </p>
         </motion.div>
 
@@ -101,7 +156,7 @@ export function GeoPanel() {
               <Search className="text-green-400 w-5 h-5" />
               <h3 className="text-sm font-bold text-green-400 tracking-wider">IP LOOKUP</h3>
             </div>
-            
+
             <div className="flex gap-2">
               <div className="flex-1">
                 <input
@@ -121,7 +176,7 @@ export function GeoPanel() {
                 onClick={handleSearch}
                 disabled={status === 'loading'}
                 className="bg-green-600 hover:bg-green-500 disabled:bg-green-900 disabled:cursor-not-allowed text-black font-bold px-6 py-2 rounded transition-colors font-mono"
-                style={{ 
+                style={{
                   boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)',
                   textShadow: '0 0 5px rgba(0, 0, 0, 0.5)'
                 }}
@@ -177,7 +232,7 @@ export function GeoPanel() {
                 backgroundSize: '20px 20px'
               }}
             />
-            
+
             {/* Cantos holográficos */}
             {['top-left', 'top-right', 'bottom-left', 'bottom-right'].map((corner) => (
               <div
@@ -199,7 +254,7 @@ export function GeoPanel() {
                 longitude={locationData.lon}
               />
             )}
-            
+
             {/* Botão para abrir mapa - sobreposto ao globo */}
             {locationData && (
               <motion.button
@@ -222,6 +277,7 @@ export function GeoPanel() {
           </motion.div>
 
           {/* Painel de Dados */}
+
           <motion.div
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -236,7 +292,7 @@ export function GeoPanel() {
                 <Signal className="text-green-400 w-6 h-6" />
                 <h2 className="text-xl font-bold text-green-400">SYSTEM STATUS</h2>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <motion.div
                   animate={{ opacity: [0.3, 1, 0.3] }}
@@ -266,7 +322,7 @@ export function GeoPanel() {
                     <MapPin className="text-green-400 w-6 h-6" />
                     <h2 className="text-xl font-bold text-green-400">LOCATION</h2>
                   </div>
-                  
+
                   <div className="space-y-2 font-mono text-sm">
                     <div className="flex justify-between">
                       <span className="text-green-500">City:</span>
@@ -299,7 +355,7 @@ export function GeoPanel() {
                     <MapPin className="text-green-400 w-6 h-6" />
                     <h2 className="text-xl font-bold text-green-400">COORDINATES</h2>
                   </div>
-                  
+
                   <div className="space-y-3 font-mono">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -326,7 +382,7 @@ export function GeoPanel() {
                     <Wifi className="text-green-400 w-6 h-6" />
                     <h2 className="text-xl font-bold text-green-400">NETWORK INFO</h2>
                   </div>
-                  
+
                   <div className="space-y-2 font-mono text-sm">
                     <div>
                       <div className="text-xs text-green-500 mb-1">IP ADDRESS</div>
@@ -359,13 +415,47 @@ export function GeoPanel() {
                     <Clock className="text-green-400 w-6 h-6" />
                     <h2 className="text-xl font-bold text-green-400">TIME ZONE</h2>
                   </div>
-                  
+
                   <div className="font-mono">
                     <div className="text-xs text-green-500 mb-1">TIMEZONE</div>
                     <div className="text-lg text-green-300">{locationData.timezone}</div>
                     <div className="text-xs text-green-500 mt-3 mb-1">LOCAL TIME</div>
                     <div className="text-lg text-green-300">
-                      {new Date().toLocaleString('en-US', { 
+                      {new Date().toLocaleString('en-US', {
+                        timeZone: locationData.timezone,
+                        dateStyle: 'medium',
+                        timeStyle: 'medium'
+                      })}
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.1 }}
+                  className="bg-gradient-to-br from-green-950/50 to-black border-2 border-green-500/30 rounded-lg p-6"
+                  style={{ boxShadow: '0 0 20px rgba(34, 197, 94, 0.1)' }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <Clock className="text-green-400 w-6 h-6" />
+                    <h2 className="text-xl font-bold text-green-400">CONTACT</h2>
+                  </div>
+
+                  <div className="font-mono">
+                    <div className="text-xs text-green-500 mb-1">Contact</div>
+                    <div className="text-lg text-green-300">Please leave your feedback on my LinkedIn and GitHub; it's always welcome 😁.</div>
+                    <div className="text-xs text-green-500 mt-3 mb-1">LOCAL CONTACT</div>
+                    <div className="text-lg text-green-300">
+                      <div className='flex flex-row'>
+                        <svg xmlns="http://www.w3.org/2000/svg" className='w-12 h-12 transition-all duration-300 hover:drop-shadow-[0_0_15px_rgba(34,197,94,1)] hover:scale-110 cursor-pointer' viewBox="0 0 24 24" onClick={() => {
+                          window.location.href = "https://github.com/Darwin00110"
+                        }}><rect width="24" height="24" fill="none" /><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M3.5 15.668q.675.081 1 .618c.326.537 1.537 2.526 2.913 2.526H9.5m5.672-3.513q.823 1.078.823 1.936V21m-5.625-5.609q-.87.954-.869 1.813V21" /><path d="M15.172 15.299c1.202-.25 2.293-.682 3.14-1.316c1.448-1.084 2.188-2.758 2.188-4.411c0-1.16-.44-2.243-1.204-3.16c-.425-.511.819-3.872-.286-3.359c-1.105.514-2.725 1.198-3.574.947c-.909-.268-1.9-.416-2.936-.416c-.9 0-1.766.111-2.574.317c-1.174.298-2.296-.363-3.426-.848c-1.13-.484-.513 3.008-.849 3.422C4.921 7.38 4.5 8.44 4.5 9.572c0 1.653.895 3.327 2.343 4.41c.965.722 2.174 1.183 3.527 1.41" /></g></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className='w-12 h-12 transition-all duration-300 hover:drop-shadow-[0_0_15px_rgba(34,197,94,1)] hover:scale-110 cursor-pointer' viewBox="0 0 24 24" onClick={() => {
+                          window.location.href = "https://www.linkedin.com/in/isaque-santos-348109376"
+                        }}><rect width="24" height="24" fill="none" /><path fill="#fff" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93zM6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37z" /></svg>
+                      </div>
+                      {new Date().toLocaleString('en-US', {
                         timeZone: locationData.timezone,
                         dateStyle: 'medium',
                         timeStyle: 'medium'
@@ -374,6 +464,7 @@ export function GeoPanel() {
                   </div>
                 </motion.div>
               </>
+
             )}
 
             {/* Linha de scan */}
@@ -406,4 +497,5 @@ export function GeoPanel() {
       )}
     </motion.div>
   );
+
 }
