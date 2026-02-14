@@ -9,37 +9,64 @@ import { isValidIP, getIPErrorMessage } from '../utils/ipValidator';
 import axios from 'axios'
 
 export interface Data {
-  as: string,
+  ip: string,
+  network: string,
+  version: string,
   city: string,
-  country: string,
-  countryCode: string,
-  isp: string,
-  lat: number,
-  lon: number,
-  org: string,
-  query: string,
   region: string,
-  regionName: string,
-  status: string,
+  region_code: string,
+  country: string,
+  country_name: string,
+  country_code: string,
+  country_code_iso3: string,
+  country_capital: string,
+  country_tld: string,
+  continent_code: string,
+  in_eu: boolean,
+  postal: string,
+  latitude: number | string,
+  longitude: number | string,
   timezone: string,
-  zip: string
+  utc_offset: string,
+  country_calling_code: string,
+  currency: string,
+  currency_name: string,
+  languages: string,
+  country_area: number | string,
+  country_population: number | string,
+  asn: string,
+  org: string,
 }
 
 export const DataUser: Data = {
-  as: "",
+  ip: "",
+  network: "",
+  version: "",
   city: "",
-  country: "",
-  countryCode: "",
-  isp: "",
-  lat: 0,
-  lon: 0,
-  org: "",
-  query: "",
   region: "",
-  regionName: "",
-  status: "",
+  region_code: "",
+  country: "",
+  country_name: "",
+  country_code: "",
+  country_code_iso3: "",
+  country_capital: "",
+  country_tld: "",
+  continent_code: "",
+  in_eu: false,
+  postal: "",
+  latitude: "",
+  longitude: "",
   timezone: "",
-  zip: ""
+  utc_offset: "",
+  country_calling_code: "",
+  currency: "",
+  currency_name: "",
+  languages: "",
+  country_area: "",
+  country_population: "",
+  asn: "",
+  org: "",
+
 }
 
 export function GeoPanel() {
@@ -57,16 +84,13 @@ export function GeoPanel() {
   const loadGeolocationData = async (ip?: string) => {
     try {
       setStatus('loading');
-      const IPUser = await axios.get("https://api.iplocate.io/json")
-      const response = await axios.get(`http://ip-api.com/json/${IPUser.data.ip}`)
-      console.log(response.data)
-      setTimeout(() => {
-        setLocationData(response.data);
-      }, 2000);
-      setStatus('success');
+      // Usa o IP fornecido ou busca o IP do usuário se estiver vazio
+      const url = ip ? `https://ipapi.co/${ip}/json/` : `https://ipapi.co/json/`;
+      const response = await axios.get(url);
+      
+      setLocationData(response.data);
       setError(null);
-      const data = await fetchGeolocation(ip);
-      setLocationData(data);
+      // Removido fetchGeolocation pois causava erro de Mixed Content (HTTP)
       setStatus('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -77,26 +101,41 @@ export function GeoPanel() {
 
   const handleSearch = async () => {
     const trimmedIp = ipInput.trim();
-    const response = await axios.get(`http://ip-api.com/json/${trimmedIp}`)
-    DataUser.as = response.data.as
-    DataUser.city = response.data.city
-    DataUser.country = response.data.country
-    DataUser.countryCode = response.data.countryCode
-    DataUser.isp = response.data.isp
-    DataUser.lat = response.data.lat
-    DataUser.lon = response.data.lon
-    DataUser.org = response.data.org
-    DataUser.query = response.data.query
-    DataUser.region = response.data.region
-    DataUser.regionName = response.data.regionName
-    DataUser.status = response.data.status
-    DataUser.timezone = response.data.timezone
-    DataUser.zip = response.data.zip
-    // Verifica se o IP é válido
+
+    // Verifica se o IP é válido ANTES da requisição
     if (!isValidIP(trimmedIp)) {
       setIpError(getIPErrorMessage(trimmedIp));
       return;
     }
+
+    const response = await axios.get(`https://ipapi.co/${trimmedIp}/json/`)
+    DataUser.ip = response.data.ip;
+    DataUser.network = response.data.network,
+    DataUser.version = response.data.version,
+    DataUser.city = response.data.city,
+    DataUser.region = response.data.region,
+    DataUser.region_code = response.data.region_code,
+    DataUser.country = response.data.country,
+    DataUser.country_name = response.data.country_name,
+    DataUser.country_code = response.data.country_code,
+    DataUser.country_code_iso3 = response.data.country_code_iso3,
+    DataUser.country_capital = response.data.country_capital,
+    DataUser.country_tld = response.data.country_tld,
+    DataUser.continent_code = response.data.continent_code,
+    DataUser.in_eu = response.data.in_eu,
+    DataUser.postal = response.data.postal,
+    DataUser.latitude = response.data.latitude,
+    DataUser.longitude = response.data.longitude,
+    DataUser.timezone = response.data.timezone,
+    DataUser.utc_offset = response.data.utc_offset,
+    DataUser.country_calling_code = response.data.country_calling_code,
+    DataUser.currency = response.data.currency,
+    DataUser.currency_name = response.data.currency_name,
+    DataUser.languages = response.data.languages,
+    DataUser.country_area = response.data.country_area,
+    DataUser.country_population = response.data.country_population,
+    DataUser.asn = response.data.asn,
+    DataUser.org = response.data.org
 
     // Limpa erro e faz a busca
     setIpError(null);
@@ -250,8 +289,8 @@ export function GeoPanel() {
 
             {locationData && (
               <HolographicGlobe
-                latitude={locationData.lat}
-                longitude={locationData.lon}
+                latitude={locationData.lat || locationData.latitude || 0}
+                longitude={locationData.lon || locationData.longitude || 0}
               />
             )}
 
@@ -302,7 +341,7 @@ export function GeoPanel() {
                 />
                 <span className="text-green-300 font-mono text-sm">
                   {status === 'loading' && 'ACQUIRING DATA...'}
-                  {status === 'success' && locationData && `SIGNAL ACQUIRED - ${locationData.status.toUpperCase()}`}
+                  {status === 'success' && locationData && `SIGNAL ACQUIRED - ${(locationData.status || 'ONLINE').toUpperCase()}`}
                   {status === 'error' && `ERROR: ${error}`}
                 </span>
               </div>
@@ -330,15 +369,15 @@ export function GeoPanel() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-green-500">Region:</span>
-                      <span className="text-green-300">{locationData.regionName} ({locationData.region})</span>
+                      <span className="text-green-300">{locationData.regionName || locationData.region} ({locationData.region_code || locationData.region})</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-green-500">Country:</span>
-                      <span className="text-green-300">{locationData.country} ({locationData.countryCode})</span>
+                      <span className="text-green-300">{locationData.country || locationData.country_name} ({locationData.countryCode || locationData.country_code})</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-green-500">ZIP Code:</span>
-                      <span className="text-green-300">{locationData.zip}</span>
+                      <span className="text-green-300">{locationData.zip || locationData.postal}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -360,11 +399,11 @@ export function GeoPanel() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <div className="text-xs text-green-500 mb-1">LATITUDE</div>
-                        <div className="text-2xl text-green-300">{locationData.lat.toFixed(4)}°</div>
+                        <div className="text-2xl text-green-300">{(locationData.lat || locationData.latitude || 0).toFixed(4)}°</div>
                       </div>
                       <div>
                         <div className="text-xs text-green-500 mb-1">LONGITUDE</div>
-                        <div className="text-2xl text-green-300">{locationData.lon.toFixed(4)}°</div>
+                        <div className="text-2xl text-green-300">{(locationData.lon || locationData.longitude || 0).toFixed(4)}°</div>
                       </div>
                     </div>
                   </div>
@@ -386,7 +425,7 @@ export function GeoPanel() {
                   <div className="space-y-2 font-mono text-sm">
                     <div>
                       <div className="text-xs text-green-500 mb-1">IP ADDRESS</div>
-                      <div className="text-green-300">{locationData.query}</div>
+                      <div className="text-green-300">{locationData.query || locationData.ip}</div>
                     </div>
                     <div>
                       <div className="text-xs text-green-500 mb-1">ISP</div>
@@ -398,7 +437,7 @@ export function GeoPanel() {
                     </div>
                     <div>
                       <div className="text-xs text-green-500 mb-1">AS</div>
-                      <div className="text-green-300">{locationData.as}</div>
+                      <div className="text-green-300">{locationData.as || locationData.asn}</div>
                     </div>
                   </div>
                 </motion.div>
@@ -450,7 +489,7 @@ export function GeoPanel() {
                       <div className='flex flex-row'>
                         <svg xmlns="http://www.w3.org/2000/svg" className='w-12 h-12 transition-all duration-300 hover:drop-shadow-[0_0_15px_rgba(34,197,94,1)] hover:scale-110 cursor-pointer' viewBox="0 0 24 24" onClick={() => {
                           window.location.href = "https://github.com/Darwin00110"
-                        }}><rect width="24" height="24" fill="none" /><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M3.5 15.668q.675.081 1 .618c.326.537 1.537 2.526 2.913 2.526H9.5m5.672-3.513q.823 1.078.823 1.936V21m-5.625-5.609q-.87.954-.869 1.813V21" /><path d="M15.172 15.299c1.202-.25 2.293-.682 3.14-1.316c1.448-1.084 2.188-2.758 2.188-4.411c0-1.16-.44-2.243-1.204-3.16c-.425-.511.819-3.872-.286-3.359c-1.105.514-2.725 1.198-3.574.947c-.909-.268-1.9-.416-2.936-.416c-.9 0-1.766.111-2.574.317c-1.174.298-2.296-.363-3.426-.848c-1.13-.484-.513 3.008-.849 3.422C4.921 7.38 4.5 8.44 4.5 9.572c0 1.653.895 3.327 2.343 4.41c.965.722 2.174 1.183 3.527 1.41" /></g></svg>
+                        }}><rect width="24" height="24" fill="none" /><g fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"><path d="M3.5 15.668q.675.081 1 .618c.326.537 1.537 2.526 2.913 2.526H9.5m5.672-3.513q.823 1.078.823 1.936V21m-5.625-5.609q-.87.954-.869 1.813V21" /><path d="M15.172 15.299c1.202-.25 2.293-.682 3.14-1.316c1.448-1.084 2.188-2.758 2.188-4.411c0-1.16-.44-2.243-1.204-3.16c-.425-.511.819-3.872-.286-3.359c-1.105.514-2.725 1.198-3.574.947c-.909-.268-1.9-.416-2.936-.416c-.9 0-1.766.111-2.574.317c-1.174.298-2.296-.363-3.426-.848c-1.13-.484-.513 3.008-.849 3.422C4.921 7.38 4.5 8.44 4.5 9.572c0 1.653.895 3.327 2.343 4.41c.965.722 2.174 1.183 3.527 1.41" /></g></svg>
                         <svg xmlns="http://www.w3.org/2000/svg" className='w-12 h-12 transition-all duration-300 hover:drop-shadow-[0_0_15px_rgba(34,197,94,1)] hover:scale-110 cursor-pointer' viewBox="0 0 24 24" onClick={() => {
                           window.location.href = "https://www.linkedin.com/in/isaque-santos-348109376"
                         }}><rect width="24" height="24" fill="none" /><path fill="#fff" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93zM6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37z" /></svg>
@@ -490,9 +529,9 @@ export function GeoPanel() {
         <InteractiveMap
           isOpen={isMapOpen}
           onClose={() => setIsMapOpen(false)}
-          latitude={locationData.lat}
-          longitude={locationData.lon}
-          locationName={`${locationData.city}, ${locationData.country}`}
+          latitude={locationData.lat || locationData.latitude || 0}
+          longitude={locationData.lon || locationData.longitude || 0}
+          locationName={`${locationData.city}, ${locationData.country || locationData.country_name}`}
         />
       )}
     </motion.div>

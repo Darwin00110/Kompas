@@ -64,8 +64,8 @@ export function InteractiveMap({
     try {
       setLoading(true);
       setError(null);
-      coordinates.lat = DataUser.lat
-      coordinates.lng = DataUser.lon;
+      coordinates.lat = Number(DataUser.latitude) || latitude;
+      coordinates.lng = Number(DataUser.longitude) || longitude;
       const data = await fetchMapData(coordinates);
       setMapData(data);
     } catch (err) {
