@@ -6,26 +6,26 @@ Kompas is a lightweight IP intelligence tool that retrieves and organizes public
 
 # 🚀 Features
 
-# 🌍 Detects public IP address
+## 🌍 Detects public IP address
 
-# 🏢 Identifies ISP (Internet Service Provider)
+## 🏢 Identifies ISP (Internet Service Provider)
 
-# 🗺️ Retrieves country, region, and approximate city
+## 🗺️ Retrieves country, region, and approximate city
 
-# 🧩 Extracts ASN and provider organization
+## 🧩 Extracts ASN and provider organization
 
-# 📊 Structured output for monitoring and analysis
+## 📊 Structured output for monitoring and analysis
 
-# ⚡ Lightweight and fast response
+## ⚡ Lightweight and fast response
 
-# 🛠️ How It Works
+## 🛠️ How It Works
 
 Kompas queries public IP geolocation databases and transforms raw network metadata into structured, readable information.
 
 The system does not access private data.
 All information is derived from publicly available IP registry sources.
 
-# ⚠️ Location data is approximate and based on ISP registration, not exact physical user location.
+## ⚠️ Location data is approximate and based on ISP registration, not exact physical user location.
 
 # 📦 Use Cases
 
