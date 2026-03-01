@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Loader2, Navigation2, Layers, RefreshCw } from 'lucide-react';
 import { MapData, Coordinates } from '../types/mapData';
 import { fetchMapData } from '../services/mapService';
-import { DataUser, type Data } from './GeoPanel'
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -64,8 +63,6 @@ export function InteractiveMap({
     try {
       setLoading(true);
       setError(null);
-      coordinates.lat = Number(DataUser.latitude) || latitude;
-      coordinates.lng = Number(DataUser.longitude) || longitude;
       const data = await fetchMapData(coordinates);
       setMapData(data);
     } catch (err) {

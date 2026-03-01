@@ -1,145 +1,35 @@
 import { motion } from 'motion/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { MapPin, Signal, Wifi, Clock, Search, Loader2, Navigation } from 'lucide-react';
 import { HolographicGlobe } from './HolographicGlobe';
 import { InteractiveMap } from './InteractiveMap';
-import { GeolocationData, GeolocationStatus } from '../types/geolocation';
-import { fetchGeolocation } from '../services/geolocationService';
 import { isValidIP, getIPErrorMessage } from '../utils/ipValidator';
-import axios from 'axios'
-
-export interface Data {
-  ip: string,
-  network: string,
-  version: string,
-  city: string,
-  region: string,
-  region_code: string,
-  country: string,
-  country_name: string,
-  country_code: string,
-  country_code_iso3: string,
-  country_capital: string,
-  country_tld: string,
-  continent_code: string,
-  in_eu: boolean,
-  postal: string,
-  latitude: number | string,
-  longitude: number | string,
-  timezone: string,
-  utc_offset: string,
-  country_calling_code: string,
-  currency: string,
-  currency_name: string,
-  languages: string,
-  country_area: number | string,
-  country_population: number | string,
-  asn: string,
-  org: string,
-}
-
-export const DataUser: Data = {
-  ip: "",
-  network: "",
-  version: "",
-  city: "",
-  region: "",
-  region_code: "",
-  country: "",
-  country_name: "",
-  country_code: "",
-  country_code_iso3: "",
-  country_capital: "",
-  country_tld: "",
-  continent_code: "",
-  in_eu: false,
-  postal: "",
-  latitude: "",
-  longitude: "",
-  timezone: "",
-  utc_offset: "",
-  country_calling_code: "",
-  currency: "",
-  currency_name: "",
-  languages: "",
-  country_area: "",
-  country_population: "",
-  asn: "",
-  org: "",
-
-}
+import { useGeolocation } from '../hooks/useGeolocation';
 
 export function GeoPanel() {
-  const [locationData, setLocationData] = useState<GeolocationData | null>(null);
-  const [status, setStatus] = useState<GeolocationStatus>('loading');
-  const [error, setError] = useState<string | null>(null);
   const [ipInput, setIpInput] = useState('');
   const [ipError, setIpError] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const API_KEY =
+    import.meta.env.VITE_IPGEOLOCATION_API_KEY || "aeb47e8b16ff4021aa40dde11456e85a"
 
-  useEffect(() => {
-    loadGeolocationData();
-  }, []);
+  const { data: locationData, status, error, lookup } = useGeolocation(API_KEY);
 
-  const loadGeolocationData = async (ip?: string) => {
-    try {
-      setStatus('loading');
-      // Usa o IP fornecido ou busca o IP do usuário se estiver vazio
-      const url = ip ? `https://ipapi.co/${ip}/json/` : `https://ipapi.co/json/`;
-      const response = await axios.get(url);
-      
-      setLocationData(response.data);
-      setError(null);
-      // Removido fetchGeolocation pois causava erro de Mixed Content (HTTP)
-      setStatus('success');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
-      setStatus('error');
-    }
-  };
-
+  const handleDefault = async (ipDefault: string) => {
+    lookup(ipDefault);
+  }
   const handleSearch = async () => {
     const trimmedIp = ipInput.trim();
 
-    // Verifica se o IP é válido ANTES da requisição
+    // Verifica se o IP ?? v??lido ANTES da requisi????o
     if (!isValidIP(trimmedIp)) {
       setIpError(getIPErrorMessage(trimmedIp));
       return;
     }
 
-    const response = await axios.get(`https://ipapi.co/${trimmedIp}/json/`)
-    DataUser.ip = response.data.ip;
-    DataUser.network = response.data.network,
-    DataUser.version = response.data.version,
-    DataUser.city = response.data.city,
-    DataUser.region = response.data.region,
-    DataUser.region_code = response.data.region_code,
-    DataUser.country = response.data.country,
-    DataUser.country_name = response.data.country_name,
-    DataUser.country_code = response.data.country_code,
-    DataUser.country_code_iso3 = response.data.country_code_iso3,
-    DataUser.country_capital = response.data.country_capital,
-    DataUser.country_tld = response.data.country_tld,
-    DataUser.continent_code = response.data.continent_code,
-    DataUser.in_eu = response.data.in_eu,
-    DataUser.postal = response.data.postal,
-    DataUser.latitude = response.data.latitude,
-    DataUser.longitude = response.data.longitude,
-    DataUser.timezone = response.data.timezone,
-    DataUser.utc_offset = response.data.utc_offset,
-    DataUser.country_calling_code = response.data.country_calling_code,
-    DataUser.currency = response.data.currency,
-    DataUser.currency_name = response.data.currency_name,
-    DataUser.languages = response.data.languages,
-    DataUser.country_area = response.data.country_area,
-    DataUser.country_population = response.data.country_population,
-    DataUser.asn = response.data.asn,
-    DataUser.org = response.data.org
-
     // Limpa erro e faz a busca
     setIpError(null);
-    setLocationData(response.data);
+    lookup(trimmedIp);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -229,21 +119,12 @@ export function GeoPanel() {
             </div>
 
             {/* IPs de exemplo */}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2 text-green-500 text-xs">
               <span className="text-xs text-green-500">Exemplos:</span>
-              {['24.48.0.1', '8.8.8.8', '1.1.1.1', '200.160.2.3'].map((ip) => (
-                <button
-                  key={ip}
-                  onClick={() => {
-                    setIpInput(ip);
-                    setIpError(null);
-                    loadGeolocationData(ip);
-                  }}
-                  className="text-xs text-green-400 hover:text-green-300 underline font-mono transition-colors"
-                >
-                  {ip}
-                </button>
-              ))}
+                <p className='font-bold font-sans hover:text-shadow-2xs text-shadow-green-400 cursor-pointer' onClick={() => handleDefault('24.48.0.1')}>24.48.0.1</p>
+                <p className='font-bold font-sans hover:text-shadow-2xs text-shadow-green-400 cursor-pointer' onClick={() => handleDefault('1.1.1.1')}>1.1.1.1</p>
+                <p className='font-bold font-sans hover:text-shadow-2xs text-shadow-green-400 cursor-pointer' onClick={() => handleDefault('8.8.8.8')}>8.8.8.8</p>
+                <p className='font-bold font-sans hover:text-shadow-2xs text-shadow-green-400 cursor-pointer' onClick={() => handleDefault('200.160.2.3')}>200.160.2.3</p>
             </div>
           </div>
         </motion.div>
@@ -399,11 +280,11 @@ export function GeoPanel() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <div className="text-xs text-green-500 mb-1">LATITUDE</div>
-                        <div className="text-2xl text-green-300">{(locationData.lat || locationData.latitude || 0).toFixed(4)}°</div>
+                      <div className="text-2xl text-green-300">{Number(locationData.lat ?? locationData.latitude ?? 0).toFixed(4)}°</div>
                       </div>
                       <div>
                         <div className="text-xs text-green-500 mb-1">LONGITUDE</div>
-                        <div className="text-2xl text-green-300">{(locationData.lon || locationData.longitude || 0).toFixed(4)}°</div>
+                      <div className="text-2xl text-green-300">{Number(locationData.lon ?? locationData.longitude ?? 0).toFixed(4)}°</div>
                       </div>
                     </div>
                   </div>
@@ -457,14 +338,21 @@ export function GeoPanel() {
 
                   <div className="font-mono">
                     <div className="text-xs text-green-500 mb-1">TIMEZONE</div>
-                    <div className="text-lg text-green-300">{locationData.timezone}</div>
+                    <div className="text-lg text-green-300">{locationData.timezone || 'N/A'}</div>
                     <div className="text-xs text-green-500 mt-3 mb-1">LOCAL TIME</div>
                     <div className="text-lg text-green-300">
-                      {new Date().toLocaleString('en-US', {
-                        timeZone: locationData.timezone,
-                        dateStyle: 'medium',
-                        timeStyle: 'medium'
-                      })}
+                      {(() => {
+                        if (!locationData.timezone) return 'N/A';
+                        try {
+                          return new Date().toLocaleString('en-US', {
+                            timeZone: locationData.timezone,
+                            dateStyle: 'medium',
+                            timeStyle: 'medium'
+                          });
+                        } catch {
+                          return 'N/A';
+                        }
+                      })()}
                     </div>
                   </div>
                 </motion.div>
@@ -494,11 +382,18 @@ export function GeoPanel() {
                           window.location.href = "https://www.linkedin.com/in/isaque-santos-348109376"
                         }}><rect width="24" height="24" fill="none" /><path fill="#fff" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93zM6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37z" /></svg>
                       </div>
-                      {new Date().toLocaleString('en-US', {
-                        timeZone: locationData.timezone,
-                        dateStyle: 'medium',
-                        timeStyle: 'medium'
-                      })}
+                      {(() => {
+                        if (!locationData.timezone) return 'N/A';
+                        try {
+                          return new Date().toLocaleString('en-US', {
+                            timeZone: locationData.timezone,
+                            dateStyle: 'medium',
+                            timeStyle: 'medium'
+                          });
+                        } catch {
+                          return 'N/A';
+                        }
+                      })()}
                     </div>
                   </div>
                 </motion.div>
